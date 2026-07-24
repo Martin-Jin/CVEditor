@@ -1,0 +1,2 @@
+/* Intentionally minimal: global resets and design tokens live in
+   src/styles/app.css so all editor-chrome styling has one source of truth. */

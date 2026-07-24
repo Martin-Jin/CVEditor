@@ -1,0 +1,585 @@
+/* ==========================================================================
+   The CV document itself. Every measurement here reads from CSS custom
+   properties that are set inline by CVDocument.jsx from the theme store.
+   This is what guarantees "auto-aligned, consistent spacing": components
+   never hardcode px values — they only ever consume --cv-* tokens.
+   ========================================================================== */
+
+/* Vertical stack of real, separately-margined page boxes (see
+   CVDocument.jsx's pagination). This is what the editor scrolls and what
+   gets exported — there is no separate "PDF-only" layout. */
+.cv-page-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cv-page {
+  /* A4 at 72pt/in. Fixed height (not min-height): content that doesn't
+     fit is placed on the NEXT page by CVDocument's pagination, so a page
+     never needs to grow past one A4 sheet — if it did, that would mean
+     pagination mis-measured, not that overflow is expected here. */
+  --page-w: 595pt;
+  --page-h: 842pt;
+  width: var(--page-w);
+  height: var(--page-h);
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(20, 20, 24, 0.16);
+  color: var(--cv-ink, #141414);
+  font-family: var(--cv-font, "Helvetica Neue", Arial, sans-serif);
+  font-size: var(--cv-body-size, 8.4pt);
+  line-height: var(--cv-line-height, 1.32);
+  padding: var(--cv-page-margin-top, 26pt) var(--cv-margin-x, 18pt) var(--cv-page-margin-bottom, 20pt);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.cv-page + .cv-page {
+  margin-top: 18px;
+}
+
+.cv-page * {
+  box-sizing: border-box;
+}
+
+/* Hidden off-screen copy of the full document (non-editing) that
+   CVDocument measures section heights from. Never shown — positioned far
+   off-screen rather than `display:none` so the browser still performs
+   full layout. Defines --page-w itself (rather than relying on
+   inheritance from .cv-page, which isn't an ancestor here) so pagination
+   can compute its own render-scale independently of any .cv-page in the
+   visible output. */
+.cv-measure-host {
+  --page-w: 595pt;
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  width: var(--page-w);
+  padding: 0 var(--cv-margin-x, 18pt);
+  /* .cv-page is the only source of font-family/size/line-height/color for
+     any unstyled inherited text (bullets, descriptions, body text) — but
+     this host isn't nested inside a .cv-page, so without repeating them
+     here that text falls back to the UA default (16px/1.15) instead of
+     the theme's actual size, inflating measured heights by ~1.7x and
+     making the packer defer content to the next page far earlier than
+     the real (much shorter) render actually requires. */
+  font-family: var(--cv-font, "Helvetica Neue", Arial, sans-serif);
+  font-size: var(--cv-body-size, 8.4pt);
+  line-height: var(--cv-line-height, 1.32);
+  color: var(--cv-ink, #141414);
+  /* CRITICAL for pagination accuracy: this element's own box-sizing must
+     be border-box so its rendered width is EXACTLY --page-w (595pt), not
+     595pt + the horizontal padding above. paginate.js derives renderScale
+     as hostRect.width / authoredWidthPt and expects that ratio to be 1:1;
+     without border-box here the extra padding inflates hostRect.width,
+     pushing renderScale above 1, which makes every measured height
+     (toPt = px / renderScale) come out SMALLER than its true size. That
+     systematic under-measurement is what let the packer fit too much
+     content onto page 1 (overflowing the fixed-height .cv-page and being
+     clipped by `overflow: hidden` while editing) while page 2 sits
+     comparatively empty in preview even though content could fit there.
+     `.cv-measure-host *` below already covers descendants; the host
+     itself isn't its own descendant so it needs this explicitly. */
+  box-sizing: border-box;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.cv-measure-host * {
+  box-sizing: border-box;
+}
+
+/* Mirrors .cv-columns' flex-basis math exactly, so each column is
+   measured at the SAME width it will actually render at — critical,
+   since a section measured at full page width wraps onto fewer lines
+   than the same section inside a narrower real column. */
+.cv-measure-columns {
+  display: flex;
+  gap: var(--cv-column-gap, 10pt);
+}
+
+.cv-measure-columns.single {
+  display: block;
+}
+
+.cv-measure-columns:not(.single) {
+  gap: 0;
+}
+
+.cv-measure-column {
+  min-width: 0;
+}
+
+.cv-measure-column-left {
+  flex: var(--cv-left-flex, 62) 1 0%;
+}
+
+.cv-measure-columns:not(.single) .cv-measure-column-left {
+  padding-right: var(--cv-column-gap, 10pt);
+  /* The real .cv-column-left additionally has a 1pt border-right (the
+     divider rule between columns), which eats into its content width.
+     This measure column has no visible border to render, but must still
+     reserve the same 1pt so its content area matches the real column's
+     width exactly — otherwise text can wrap differently near the right
+     edge, throwing off every height measured below it. */
+  padding-right: calc(var(--cv-column-gap, 10pt) + var(--cv-rule-thickness, 1pt));
+}
+
+.cv-measure-column-right {
+  flex: var(--cv-right-flex, 38) 1 0%;
+}
+
+.cv-measure-columns:not(.single) .cv-measure-column-right {
+  padding-left: var(--cv-column-gap, 10pt);
+}
+
+/* Separator shown between pages while editing, marking exactly where
+   content automatically continues onto the next page — including both
+   pages' margins, per the pagination spec (page 2's top margin equals
+   page 1's bottom margin). */
+.cv-page-separator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2pt;
+  width: 595pt;
+  padding: 6pt 0;
+  color: #8a8f99;
+  font-family: var(--font-ui, "Inter", sans-serif);
+  font-size: 8pt;
+  font-weight: 600;
+}
+
+.cv-page-separator-line {
+  width: 100%;
+  border-top: 1pt dashed #c9ccd2;
+}
+
+.cv-page-separator-label {
+  background: #eceef1;
+  padding: 1pt 8pt;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.cv-page-separator-margin {
+  font-size: 7.5pt;
+  font-weight: 500;
+  color: #aaadb5;
+  white-space: nowrap;
+}
+
+/* ---- Header ---------------------------------------------------------- */
+
+.cv-header {
+  text-align: var(--cv-header-align, center);
+  margin-bottom: calc(var(--cv-unit, 6pt) * var(--cv-section-gap, 1.6) * 1.8);
+}
+
+/* Same click-to-activate affordance as .cv-section-editable — see that
+   rule's comment. The header isn't one of the reorderable sections, so
+   it tracks its own activation state via CVDocument's HEADER_PSEUDO_ID,
+   but the visual language matches. */
+.cv-header-editable {
+  cursor: text;
+  border-radius: 3px;
+  outline: 1.5px solid transparent;
+  outline-offset: 6px;
+  transition: outline-color 0.12s ease, background-color 0.12s ease;
+}
+
+.cv-header-editable:hover {
+  outline-color: rgba(181, 104, 10, 0.28);
+}
+
+.cv-header-editable.active {
+  outline-color: rgba(181, 104, 10, 0.55);
+  background-color: rgba(181, 104, 10, 0.035);
+}
+
+.cv-name {
+  font-size: var(--cv-name-size, 22pt);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 3pt;
+  color: var(--cv-ink, #141414);
+}
+
+.cv-header-title {
+  font-size: var(--cv-title-size, 9.5pt);
+  color: var(--cv-muted, #5a5a5a);
+  margin: 0 0 5pt;
+}
+
+.cv-contacts {
+  font-size: var(--cv-meta-size, 7.6pt);
+  color: var(--cv-muted, #5a5a5a);
+}
+
+.cv-header[data-align="center"] .cv-contacts {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 8pt;
+}
+
+.cv-header[data-align="left"] .cv-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 1pt;
+}
+
+.cv-contacts a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cv-contacts a:hover {
+  text-decoration: underline;
+}
+
+.cv-contact-label {
+  font-weight: 700;
+  margin-right: 3pt;
+}
+
+/* NOTE: the source CV has no rule directly under the header block — only
+   the per-section rules and the between-columns divider. HeaderBlock still
+   accepts a `showRule` prop and this class still renders it when true, but
+   CVDocument passes `showRule={false}` by default to match the source. */
+.cv-header-rule {
+  height: var(--cv-rule-thickness, 1pt);
+  background: var(--cv-rule, #141414);
+  margin-top: calc(var(--cv-unit, 6pt) * 0.9);
+  border: none;
+}
+
+/* ---- Columns ------------------------------------------------------------ */
+
+.cv-columns {
+  display: flex;
+  gap: var(--cv-column-gap, 10pt);
+  align-items: flex-start;
+}
+
+.cv-columns.single {
+  display: block;
+}
+
+.cv-column {
+  min-width: 0;
+}
+
+.cv-column-left {
+  flex: var(--cv-left-flex, 62) 1 0%;
+}
+
+.cv-column-right {
+  flex: var(--cv-right-flex, 38) 1 0%;
+}
+
+/* Vertical divider between columns, matching the "middle separator"
+   exception called out in the format spec. Both columns get equal
+   breathing room from the rule, not just the left one. */
+.cv-columns:not(.single) {
+  gap: 0;
+}
+
+.cv-columns:not(.single) .cv-column-left {
+  border-right: var(--cv-rule-thickness, 1pt) solid var(--cv-rule, #141414);
+  padding-right: var(--cv-column-gap, 10pt);
+}
+
+.cv-columns:not(.single) .cv-column-right {
+  padding-left: var(--cv-column-gap, 10pt);
+}
+
+/* ---- Sections ------------------------------------------------------------- */
+
+.cv-section {
+  margin-bottom: calc(var(--cv-unit, 6pt) * var(--cv-section-gap, 1.6));
+  break-inside: avoid-page;
+}
+
+.cv-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Click-to-activate affordance (edit mode only — see SectionBlock's
+   `isActive`). A subtle outline on hover invites the click; once active,
+   a slightly stronger outline plus a faint fill marks which section is
+   currently showing its empty/placeholder fields and controls, so it's
+   clear at a glance why this one section looks different from the rest
+   of the (compact, preview-like) document around it. Both are purely
+   cosmetic — inactive sections have already been visually
+   indistinguishable from preview since before this rule even applies. */
+.cv-section-editable {
+  cursor: text;
+  border-radius: 3px;
+  outline: 1.5px solid transparent;
+  outline-offset: 4px;
+  transition: outline-color 0.12s ease, background-color 0.12s ease;
+}
+
+.cv-section-editable:hover {
+  outline-color: rgba(181, 104, 10, 0.28);
+}
+
+.cv-section-editable.active {
+  outline-color: rgba(181, 104, 10, 0.55);
+  background-color: rgba(181, 104, 10, 0.035);
+}
+
+.cv-section-heading {
+  font-size: var(--cv-heading-size, 11pt);
+  font-weight: var(--cv-heading-weight, 700);
+  text-align: var(--cv-heading-align, left);
+  text-transform: var(--cv-heading-case, uppercase);
+  letter-spacing: 0.03em;
+  margin: 0 0 4pt;
+  color: var(--cv-ink, #141414);
+}
+
+/* The section-underline separator — used directly under every section
+   heading, per the formatting spec. */
+.cv-section-rule {
+  border: none;
+  height: var(--cv-rule-thickness, 1pt);
+  background: var(--cv-rule, #141414);
+  margin: 0 0 calc(var(--cv-unit, 6pt) * 0.85);
+  display: block;
+}
+
+.cv-section-rule.hidden {
+  display: none;
+}
+
+/* ---- Text block section --------------------------------------------------- */
+
+.cv-text-body {
+  margin: 0;
+  text-align: left;
+}
+
+/* ---- Entry list section ---------------------------------------------------- */
+
+.cv-entry {
+  margin-bottom: calc(var(--cv-unit, 6pt) * var(--cv-entry-gap, 1));
+}
+
+.cv-entry:last-child {
+  margin-bottom: 0;
+}
+
+.cv-entry-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10pt;
+  margin-bottom: calc(var(--cv-unit, 6pt) * 0.5);
+}
+
+.cv-entry-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.cv-entry-org {
+  font-weight: 700;
+  font-size: var(--cv-entry-title-size, 9.5pt);
+}
+
+/* Role / subtitle line (e.g. a degree name, or a parenthetical qualifier
+   like "(online tutoring)"). Distinguished from the entry title with color
+   rather than bold, so it doesn't compete for visual weight. */
+.cv-entry-role {
+  font-weight: 500;
+  font-style: normal;
+  font-size: var(--cv-role-size, 8.4pt);
+  color: var(--cv-role, #8a5a12);
+  margin-top: 1pt;
+}
+
+/* Date / location stack in a single right-aligned block, top-aligned with
+   the entry title — matching the source CV. There is no "hours per week"
+   line; only date range and location ever appear here. */
+.cv-entry-meta-block {
+  flex-shrink: 0;
+  text-align: right;
+  font-size: var(--cv-meta-size, 7.6pt);
+  color: var(--cv-ink, #141414);
+  white-space: nowrap;
+}
+
+.cv-entry-date {
+  font-weight: 600;
+}
+
+.cv-entry-location {
+  font-weight: 400;
+  color: var(--cv-muted, #5a5a5a);
+}
+
+.cv-entry-description {
+  margin: 3pt 0 0;
+}
+
+.cv-entry-bullets {
+  margin: 3pt 0 0;
+  padding-left: 12pt;
+  list-style-type: var(--cv-bullet-style, disc);
+}
+
+.cv-entry-bullets li {
+  margin-bottom: 1.5pt;
+}
+
+.cv-entry-bullets li:last-child {
+  margin-bottom: 0;
+}
+
+.cv-entry-bullet-label {
+  font-weight: 700;
+  font-style: italic;
+  margin-right: 2pt;
+}
+
+.cv-entry-footer {
+  margin-top: 3pt;
+  font-size: var(--cv-meta-size, 7.6pt);
+  color: var(--cv-muted, #5a5a5a);
+}
+
+/* Between-jobs separator exception: a fine rule between consecutive
+   entries in an entry-list section (off by default to match the source
+   CV, toggleable in the style panel). */
+.cv-entry + .cv-entry-rule {
+  display: none;
+}
+
+.cv-section[data-entry-rules="true"] .cv-entry:not(:last-child) {
+  padding-bottom: calc(var(--cv-unit, 6pt) * var(--cv-entry-gap, 1) * 0.6);
+  margin-bottom: calc(var(--cv-unit, 6pt) * var(--cv-entry-gap, 1) * 0.4);
+  border-bottom: 0.6pt solid #e2e2e2;
+}
+
+/* ---- Skill list / label list section ---------------------------------------- */
+
+.cv-skill-item, .cv-label-item {
+  margin-bottom: 3.5pt;
+}
+
+.cv-skill-item:last-child, .cv-label-item:last-child {
+  margin-bottom: 0;
+}
+
+.cv-skill-label {
+  font-weight: 700;
+  margin-right: 3pt;
+}
+
+.cv-label-item .cv-skill-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.5pt;
+}
+
+.cv-item-italic {
+  font-style: italic;
+}
+
+/* ---- Editable text affordance (only visible in edit mode) -------------------- */
+
+.cv-editable {
+  outline: none;
+  border-radius: 2px;
+  transition: box-shadow 0.1s ease;
+}
+
+.editing .cv-editable:hover {
+  box-shadow: 0 0 0 1px rgba(181, 104, 10, 0.35);
+}
+
+.editing .cv-editable:focus {
+  box-shadow: 0 0 0 2px rgba(181, 104, 10, 0.55);
+  background: rgba(181, 104, 10, 0.04);
+}
+
+.cv-editable:empty::before {
+  content: attr(data-);
+  color: #b7b7b7;
+  font-style: italic;
+}
+
+/* Per-item editing controls (move up/down, remove, add-bullet) are only
+   ever rendered into the DOM at all when their section is the ACTIVE one
+   (see SectionBlock's `isActive`/`showEmptyState` and the list-renderer
+   components that consume it) — not merely CSS-hidden-until-hover. This
+   is what keeps an inactive section looking pixel-identical to preview:
+   there's no hidden-but-present control markup reserving anything or
+   needing a hover/focus reveal rule at all. No CSS is needed here beyond
+   ensuring controls never print/export (`.no-print` below).
+
+   Elements only meant for the in-app editing experience (add/remove/move
+   buttons, the page-overflow indicator, the page-break handle). Both the
+   real paginated `.cv-page` (preview) and the continuous
+   `.cv-continuous-page` (editing) can carry `.no-print` children, but
+   only the continuous/editing one should ever actually show them —
+   exportPDF.js separately strips `.no-print` outright before
+   rasterizing, and this rule additionally hides them the moment
+   `.editing` isn't present (i.e. preview), so they never leak into any
+   rendered output even before export's own stripping runs. */
+.cv-page:not(.editing) .no-print {
+  display: none !important;
+}
+
+/* ---- Print rules ------------------------------------------------------------- */
+
+@media print {
+  .cv-page {
+    box-shadow: none;
+  }
+  .cv-page-break,
+  .cv-page-separator {
+    display: none;
+  }
+}
+
+/* ---- Continuous editing view -----------------------------------------
+   In edit mode the document is ONE naturally-flowing column, not a stack
+   of fixed-height A4 boxes — see CVDocument.jsx's top-level doc comment
+   for why. `.cv-continuous-page` still carries the `.cv-page` class for
+   shared typography/token rules (font, colors, spacing all read the same
+   --cv-* custom properties), but overrides its sizing to grow with
+   content instead of being clipped to one A4 sheet. There is deliberately
+   NO min-height/max-height tie to --page-h here: nothing in this view is
+   ever meant to look like "a page ending", only the draggable break
+   line(s) drawn on top mark where pages will actually fall in
+   Preview/export. */
+.cv-continuous-page {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding-bottom: 80pt; /* breathing room below the last break line / overflow banner */
+}
+
+
+/* ---- Page-overflow indicator -------------------------------------------------
+   Shown only when content still doesn't fit within theme.maxPages even
+   after pagination has done its best — a normal inline banner inside the
+   last page (not an absolutely-positioned overlay at a computed offset,
+   since pagination now genuinely knows where the true edge is). */
+
+.cv-page-break {
+  margin-top: 8pt;
+  padding: 6pt 8pt;
+  border: 1pt dashed #c98a1f;
+  border-radius: 4px;
+  background: #fffaf0;
+  color: #8a5a0e;
+  font-family: var(--font-ui, "Inter", sans-serif);
+  font-size: 8pt;
+  font-weight: 600;
+  text-align: center;
+}
