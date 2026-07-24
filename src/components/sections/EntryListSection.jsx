@@ -2,6 +2,7 @@ import EditableText from '../EditableText';
 import { useCVStore } from '../../store/cvStore';
 import { PlusIcon, CloseIcon } from '../Icons';
 import MoveRemoveButtons from './MoveRemoveButtons';
+import { useSectionItems } from './useSectionItems';
 
 /**
  * `editing` keeps existing, filled-in text directly clickable-to-edit
@@ -15,14 +16,10 @@ import MoveRemoveButtons from './MoveRemoveButtons';
  * except for the section currently being worked on.
  */
 export default function EntryListSection({ sectionId, items, editing, showEmptyState = false, itemOffset = 0, totalItems, splits = {} }) {
-  const updateEntry = useCVStore((s) => s.updateEntry);
   const updateBullet = useCVStore((s) => s.updateBullet);
   const addBullet = useCVStore((s) => s.addBullet);
   const removeBullet = useCVStore((s) => s.removeBullet);
-  const removeEntry = useCVStore((s) => s.removeEntry);
-  const moveEntryStep = useCVStore((s) => s.moveEntryStep);
-
-  const total = totalItems ?? items.length;
+  const { updateEntry, removeEntry, moveEntryStep, isFirst, isLast } = useSectionItems(sectionId, itemOffset, totalItems, items);
 
   return (
     <div>
@@ -42,7 +39,7 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
                   <EditableText
                     as="span"
                     value={entry.org}
-                    onCommit={(v) => updateEntry(sectionId, entry.id, { org: v })}
+                    onCommit={(v) => updateEntry(entry.id, { org: v })}
                     editable={editing}
                     multiline={false}
                     placeholder="Organisation / entry title"
@@ -53,7 +50,7 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
                     as="div"
                     className="cv-entry-role"
                     value={entry.role}
-                    onCommit={(v) => updateEntry(sectionId, entry.id, { role: v })}
+                    onCommit={(v) => updateEntry(entry.id, { role: v })}
                     editable={editing}
                     multiline={false}
                     placeholder="Role / subtitle"
@@ -68,7 +65,7 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
                       as="div"
                       className="cv-entry-date"
                       value={entry.dateRange}
-                      onCommit={(v) => updateEntry(sectionId, entry.id, { dateRange: v })}
+                      onCommit={(v) => updateEntry(entry.id, { dateRange: v })}
                       editable={editing}
                       multiline={false}
                       placeholder="Date range"
@@ -79,7 +76,7 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
                       as="div"
                       className="cv-entry-location"
                       value={entry.location}
-                      onCommit={(v) => updateEntry(sectionId, entry.id, { location: v })}
+                      onCommit={(v) => updateEntry(entry.id, { location: v })}
                       editable={editing}
                       multiline={false}
                       placeholder="Location"
@@ -95,7 +92,7 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
               as="p"
               className="cv-entry-description"
               value={entry.description}
-              onCommit={(v) => updateEntry(sectionId, entry.id, { description: v })}
+              onCommit={(v) => updateEntry(entry.id, { description: v })}
               editable={editing}
               placeholder="Short description"
               data-sub-id="desc"
@@ -200,7 +197,7 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
               as="p"
               className="cv-entry-footer"
               value={entry.footer}
-              onCommit={(v) => updateEntry(sectionId, entry.id, { footer: v })}
+              onCommit={(v) => updateEntry(entry.id, { footer: v })}
               editable={editing}
               multiline={false}
               placeholder="Optional footer (reference, contact...)"
@@ -211,11 +208,11 @@ export default function EntryListSection({ sectionId, items, editing, showEmptyS
           {showEmptyState && (
             <div className="no-print cv-item-controls" style={{ display: 'flex', gap: '4pt', marginTop: '5pt' }}>
               <MoveRemoveButtons
-                onMoveUp={() => moveEntryStep(sectionId, entry.id, -1)}
-                onMoveDown={() => moveEntryStep(sectionId, entry.id, 1)}
-                onRemove={() => removeEntry(sectionId, entry.id)}
-                disableUp={globalIdx === 0}
-                disableDown={globalIdx === total - 1}
+                onMoveUp={() => moveEntryStep(entry.id, -1)}
+                onMoveDown={() => moveEntryStep(entry.id, 1)}
+                onRemove={() => removeEntry(entry.id)}
+                disableUp={isFirst(idx)}
+                disableDown={isLast(idx)}
                 removeTitle="Remove entry"
               />
             </div>

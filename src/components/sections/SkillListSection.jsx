@@ -1,6 +1,6 @@
 import EditableText from '../EditableText';
-import { useCVStore } from '../../store/cvStore';
 import MoveRemoveButtons from './MoveRemoveButtons';
+import { useSectionItems } from './useSectionItems';
 
 /**
  * "Label - description" list, matching "Main Technical Skills" formatting.
@@ -17,16 +17,11 @@ import MoveRemoveButtons from './MoveRemoveButtons';
  * the field, instead of needing an initial "reveal controls" click.
  */
 export default function SkillListSection({ sectionId, items, editing, showEmptyState = false, itemOffset = 0, totalItems }) {
-  const updateEntry = useCVStore((s) => s.updateEntry);
-  const removeEntry = useCVStore((s) => s.removeEntry);
-  const moveEntryStep = useCVStore((s) => s.moveEntryStep);
-
-  const total = totalItems ?? items.length;
+  const { updateEntry, removeEntry, moveEntryStep, isFirst, isLast } = useSectionItems(sectionId, itemOffset, totalItems, items);
 
   return (
     <ul className="cv-entry-bullets" style={{ margin: 0 }}>
       {items.map((item, idx) => {
-        const globalIdx = idx + itemOffset;
         return (
         <li
           className="cv-skill-item"
@@ -41,7 +36,7 @@ export default function SkillListSection({ sectionId, items, editing, showEmptyS
                   as="span"
                   className="cv-skill-label"
                   value={item.label}
-                  onCommit={(v) => updateEntry(sectionId, item.id, { label: v })}
+                  onCommit={(v) => updateEntry(item.id, { label: v })}
                   editable
                   multiline={false}
                   placeholder="Label"
@@ -49,18 +44,18 @@ export default function SkillListSection({ sectionId, items, editing, showEmptyS
                 />
                 <div className="no-print cv-item-controls" style={{ marginLeft: 'auto', display: 'flex', gap: '2px' }}>
                   <MoveRemoveButtons
-                    onMoveUp={() => moveEntryStep(sectionId, item.id, -1)}
-                    onMoveDown={() => moveEntryStep(sectionId, item.id, 1)}
-                    onRemove={() => removeEntry(sectionId, item.id)}
-                    disableUp={globalIdx === 0}
-                    disableDown={globalIdx === total - 1}
+                    onMoveUp={() => moveEntryStep(item.id, -1)}
+                    onMoveDown={() => moveEntryStep(item.id, 1)}
+                    onRemove={() => removeEntry(item.id)}
+                    disableUp={isFirst(idx)}
+                    disableDown={isLast(idx)}
                   />
                 </div>
               </div>
               <EditableText
                 as="span"
                 value={item.text}
-                onCommit={(v) => updateEntry(sectionId, item.id, { text: v })}
+                onCommit={(v) => updateEntry(item.id, { text: v })}
                 editable
                 placeholder="Description"
               />
@@ -71,12 +66,12 @@ export default function SkillListSection({ sectionId, items, editing, showEmptyS
                 as="span"
                 className="cv-skill-label"
                 value={item.label}
-                onCommit={(v) => updateEntry(sectionId, item.id, { label: v })}
+                onCommit={(v) => updateEntry(item.id, { label: v })}
                 editable
                 multiline={false}
               />
               {item.text && ' - '}
-              <EditableText as="span" value={item.text} onCommit={(v) => updateEntry(sectionId, item.id, { text: v })} editable multiline={false} />
+              <EditableText as="span" value={item.text} onCommit={(v) => updateEntry(item.id, { text: v })} editable multiline={false} />
             </>
           ) : (
             <>

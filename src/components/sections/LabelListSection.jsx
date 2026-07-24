@@ -1,6 +1,6 @@
 import EditableText from '../EditableText';
-import { useCVStore } from '../../store/cvStore';
 import MoveRemoveButtons from './MoveRemoveButtons';
+import { useSectionItems } from './useSectionItems';
 
 /**
  * Bold heading + paragraph underneath, matching "Main Soft Skills" formatting.
@@ -15,16 +15,11 @@ import MoveRemoveButtons from './MoveRemoveButtons';
  * clickable in the same compact layout preview uses.
  */
 export default function LabelListSection({ sectionId, items, editing, showEmptyState = false, itemOffset = 0, totalItems }) {
-  const updateEntry = useCVStore((s) => s.updateEntry);
-  const removeEntry = useCVStore((s) => s.removeEntry);
-  const moveEntryStep = useCVStore((s) => s.moveEntryStep);
-
-  const total = totalItems ?? items.length;
+  const { updateEntry, removeEntry, moveEntryStep, isFirst, isLast } = useSectionItems(sectionId, itemOffset, totalItems, items);
 
   return (
     <div>
       {items.map((item, idx) => {
-        const globalIdx = idx + itemOffset;
         return (
         <div className={`cv-label-item ${item.italic ? 'cv-item-italic' : ''}`} data-item-id={item.id} key={item.id}>
           {showEmptyState ? (
@@ -34,7 +29,7 @@ export default function LabelListSection({ sectionId, items, editing, showEmptyS
                   as="span"
                   className="cv-skill-label"
                   value={item.label}
-                  onCommit={(v) => updateEntry(sectionId, item.id, { label: v })}
+                  onCommit={(v) => updateEntry(item.id, { label: v })}
                   editable
                   multiline={false}
                   placeholder="Heading"
@@ -42,18 +37,18 @@ export default function LabelListSection({ sectionId, items, editing, showEmptyS
                 />
                 <div className="no-print cv-item-controls" style={{ marginLeft: 'auto', display: 'flex', gap: '2px' }}>
                   <MoveRemoveButtons
-                    onMoveUp={() => moveEntryStep(sectionId, item.id, -1)}
-                    onMoveDown={() => moveEntryStep(sectionId, item.id, 1)}
-                    onRemove={() => removeEntry(sectionId, item.id)}
-                    disableUp={globalIdx === 0}
-                    disableDown={globalIdx === total - 1}
+                    onMoveUp={() => moveEntryStep(item.id, -1)}
+                    onMoveDown={() => moveEntryStep(item.id, 1)}
+                    onRemove={() => removeEntry(item.id)}
+                    disableUp={isFirst(idx)}
+                    disableDown={isLast(idx)}
                   />
                 </div>
               </div>
               <EditableText
                 as="span"
                 value={item.text}
-                onCommit={(v) => updateEntry(sectionId, item.id, { text: v })}
+                onCommit={(v) => updateEntry(item.id, { text: v })}
                 editable
                 placeholder="Detail text"
               />
@@ -64,14 +59,14 @@ export default function LabelListSection({ sectionId, items, editing, showEmptyS
                 as="span"
                 className="cv-skill-label"
                 value={item.label}
-                onCommit={(v) => updateEntry(sectionId, item.id, { label: v })}
+                onCommit={(v) => updateEntry(item.id, { label: v })}
                 editable
                 multiline={false}
               />
               <EditableText
                 as="div"
                 value={item.text}
-                onCommit={(v) => updateEntry(sectionId, item.id, { text: v })}
+                onCommit={(v) => updateEntry(item.id, { text: v })}
                 editable
               />
             </>

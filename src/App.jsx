@@ -24,6 +24,10 @@ export default function App() {
   // in a ref rather than state since export only needs to read the
   // latest value at click-time, not re-render on every change.
   const pendingRef = useRef(false);
+  // Resolvers waiting on pagination to settle (see waitForSettled below)
+  // — notified from handlePagesChange the moment pending flips back to
+  // false, rather than being polled for.
+  const pendingWaitersRef = useRef([]);
 
   const handleExportPDF = useCallback(async () => {
     if (!stackRef.current) return;
@@ -47,17 +51,21 @@ export default function App() {
       // doesn't match what settles into view a moment later, which is
       // exactly what made the exported PDF disagree with the preview.
       const waitForSettled = async () => {
-        const start = Date.now();
         // Also give React a chance to actually commit the Preview-mode
         // render (and, if we just switched modes, for that render's own
         // pagination effect to fire and mark itself pending) before we
-        // start polling — otherwise a same-tick check could see stale
-        // "not pending" state left over from edit mode and export one
-        // frame too early.
+        // check — otherwise a same-tick check could see stale "not
+        // pending" state left over from edit mode and export one frame
+        // too early.
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        while (pendingRef.current && Date.now() - start < 2000) {
-          await new Promise((resolve) => setTimeout(resolve, 30));
-        }
+        if (!pendingRef.current) return;
+        // Wait to be notified by handlePagesChange rather than polling,
+        // with a safety timeout so export can never hang forever on a
+        // recompute that stalls.
+        await Promise.race([
+          new Promise((resolve) => pendingWaitersRef.current.push(resolve)),
+          new Promise((resolve) => setTimeout(resolve, 2000)),
+        ]);
       };
       await waitForSettled();
 
@@ -74,6 +82,11 @@ export default function App() {
 
   const handlePagesChange = useCallback((pages, pending) => {
     pendingRef.current = !!pending;
+    if (!pending && pendingWaitersRef.current.length > 0) {
+      const waiters = pendingWaitersRef.current;
+      pendingWaitersRef.current = [];
+      waiters.forEach((resolve) => resolve());
+    }
     setPageCount((prev) => (prev === pages.length ? prev : pages.length));
   }, []);
 
