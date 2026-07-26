@@ -29,12 +29,12 @@ export function createDefaultTheme() {
     //   role roleSize           — the role/subtitle line under an entry title
     //   meta metaSize           — dates, locations, contacts
     nameSize: 24.5, // H1
-    titleSize: 9.5,
+    titleSize: 8.5,
     sectionHeadingSize: 12, // H2
     entryTitleSize: 10, // H3
     bodySize: 9,
     roleSize: 8.5,
-    metaSize: 7.5,
+    metaSize: 8.5,
 
     accentColor: '#141414',
     mutedColor: '#5a5a5a',
@@ -47,17 +47,17 @@ export function createDefaultTheme() {
 
     // Spacing scale in pt. All vertical rhythm derives from `unit`.
     unit: 6.5,
-    sectionGap: 1.3, // multiples of `unit` between sections
-    entryGap: 1.0, // multiples of `unit` between entries within a section
+    sectionGap: 1, // multiples of `unit` between sections
+    entryGap: 1.5, // multiples of `unit` between entries within a section
     lineHeight: 1.3,
 
     // Layout — page dimensions are fixed to A4 (see A4_HEIGHT_PT in paginate.js).
-    pageMarginX: 16, // pt
-    pageMarginY: 12, // pt — top margin
+    pageMarginX: 50, // pt
+    pageMarginY: 15, // pt — top margin
     pageMarginYBottom: 20, // pt — intentionally slightly less than the top margin
     columnGap: 10, // pt
     leftColumnWidth: 62, // percent
-    twoColumn: true,
+    twoColumn: false,
     headerAlign: 'center', // 'left' | 'center'
     sectionHeadingAlign: 'left',
     sectionHeadingCase: 'title', // 'upper' | 'title'

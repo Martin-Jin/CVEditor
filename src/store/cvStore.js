@@ -249,6 +249,45 @@ export const useCVStore = create((set, get) => ({
     });
   },
 
+  /**
+   * Reorders the single merged list shown in the Sections panel while
+   * two-column mode is off. Both backing arrays are collapsed into one
+   * (`leftColumn` holds the full order, `rightColumn` is emptied) so
+   * there's exactly one real ordering to drag around — matching what the
+   * document itself renders in single-column mode (see ContinuousDocument
+   * in CVDocument.jsx, which already merges the two for display).
+   */
+  reorderSingleColumn(newOrder) {
+    get().commit((draft) => {
+      draft.layout.leftColumn = newOrder;
+      draft.layout.rightColumn = [];
+    });
+  },
+
+  /**
+   * Switches two-column mode on/off. Turning it OFF also collapses
+   * `rightColumn` into `leftColumn` (in place, right after its current
+   * left-column neighbors) so the Sections panel and document agree on a
+   * single real ordering rather than a display-only merge of two arrays
+   * that drift out of sync. Turning it back ON leaves the (now full)
+   * `leftColumn` as-is — there's no way to infer the split the person
+   * wants back, so they redistribute sections into `rightColumn` manually
+   * via drag, same as adding a second column to a fresh document.
+   */
+  setTwoColumnMode(enabled) {
+    const state = get();
+    const before = snapshot(state);
+    const theme = structuredClone(state.theme);
+    const cv = structuredClone(state.cv);
+    theme.twoColumn = enabled;
+    if (!enabled) {
+      cv.layout.leftColumn = [...cv.layout.leftColumn, ...cv.layout.rightColumn];
+      cv.layout.rightColumn = [];
+    }
+    set({ cv, theme, past: [...state.past, before].slice(-HISTORY_LIMIT), future: [] });
+    get()._autosave();
+  },
+
   // ---- Entry-level actions (for entry-list / skill-list / label-list) -----
 
   addEntry(sectionId) {

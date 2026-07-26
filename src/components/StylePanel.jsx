@@ -12,6 +12,7 @@ export default function StylePanel() {
   const theme = useCVStore((s) => s.theme);
   const cv = useCVStore((s) => s.cv);
   const updateTheme = useCVStore((s) => s.updateTheme);
+  const setTwoColumnMode = useCVStore((s) => s.setTwoColumnMode);
   const saveThemeAsDefault = useCVStore((s) => s.saveThemeAsDefault);
   const setManualBreak = useCVStore((s) => s.setManualBreak);
   const clearManualBreak = useCVStore((s) => s.clearManualBreak);
@@ -128,9 +129,13 @@ export default function StylePanel() {
         </PanelSection>
 
         <PanelSection title="Layout">
-          <div className="toggle-row">
-            <label htmlFor="two-col-toggle">Two-column layout</label>
-            <Switch id="two-col-toggle" checked={theme.twoColumn} onChange={(v) => set({ twoColumn: v })} />
+          <div className="field">
+            <label>Columns</label>
+            <Segmented
+              options={[{ id: false, label: 'One column' }, { id: true, label: 'Two columns' }]}
+              value={theme.twoColumn}
+              onChange={(v) => setTwoColumnMode(v)}
+            />
           </div>
           {theme.twoColumn && (
             <>

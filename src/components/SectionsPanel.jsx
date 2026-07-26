@@ -28,7 +28,8 @@ export default function SectionsPanel({ selectedSectionId, onSelectSection }) {
   const cv = useCVStore((s) => s.cv);
   const theme = useCVStore((s) => s.theme);
   const moveSection = useCVStore((s) => s.moveSection);
-  const [menuOpen, setMenuOpen] = useState(null); // 'leftColumn' | 'rightColumn' | null
+  const reorderSingleColumn = useCVStore((s) => s.reorderSingleColumn);
+  const [menuOpen, setMenuOpen] = useState(null); // 'leftColumn' | 'rightColumn' | 'single' | null
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -48,53 +49,74 @@ export default function SectionsPanel({ selectedSectionId, onSelectSection }) {
     };
   }
 
+  // Single-column mode has exactly one real ordering (see
+  // setTwoColumnMode/reorderSingleColumn in cvStore.js, which keep
+  // everything collapsed into leftColumn the moment two-column mode turns
+  // off) — so it gets one freely-reorderable list instead of the
+  // left/right split, matching what the document itself renders.
+  const singleColumnIds = [...cv.layout.leftColumn, ...cv.layout.rightColumn];
+
+  function handleSingleDragEnd(event) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = singleColumnIds.indexOf(active.id);
+    const newIndex = singleColumnIds.indexOf(over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    reorderSingleColumn(arrayMove(singleColumnIds, oldIndex, newIndex));
+  }
+
   return (
     <aside className="side-panel">
       <div className="panel-header">
         <h2>Sections</h2>
-        <p>Drag within a column to reorder, or move sections between columns.</p>
+        <p>
+          {theme.twoColumn
+            ? 'Drag within a column to reorder, or move sections between columns.'
+            : 'Drag to reorder sections top to bottom.'}
+        </p>
       </div>
       <div className="panel-content panel-scroll">
-        <ColumnList
-          title={theme.twoColumn ? 'Left column' : 'Page (top to bottom)'}
-          column="leftColumn"
-          ids={cv.layout.leftColumn}
-          sections={cv.sections}
-          sensors={sensors}
-          onDragEnd={handleDragEnd('leftColumn')}
-          selectedSectionId={selectedSectionId}
-          onSelectSection={onSelectSection}
-          menuOpen={menuOpen === 'leftColumn'}
-          onToggleMenu={() => setMenuOpen(menuOpen === 'leftColumn' ? null : 'leftColumn')}
-          onCloseMenu={() => setMenuOpen(null)}
-        />
-        {theme.twoColumn && (
+        {theme.twoColumn ? (
+          <>
+            <ColumnList
+              title="Left column"
+              column="leftColumn"
+              ids={cv.layout.leftColumn}
+              sections={cv.sections}
+              sensors={sensors}
+              onDragEnd={handleDragEnd('leftColumn')}
+              selectedSectionId={selectedSectionId}
+              onSelectSection={onSelectSection}
+              menuOpen={menuOpen === 'leftColumn'}
+              onToggleMenu={() => setMenuOpen(menuOpen === 'leftColumn' ? null : 'leftColumn')}
+              onCloseMenu={() => setMenuOpen(null)}
+            />
+            <ColumnList
+              title="Right column"
+              column="rightColumn"
+              ids={cv.layout.rightColumn}
+              sections={cv.sections}
+              sensors={sensors}
+              onDragEnd={handleDragEnd('rightColumn')}
+              selectedSectionId={selectedSectionId}
+              onSelectSection={onSelectSection}
+              menuOpen={menuOpen === 'rightColumn'}
+              onToggleMenu={() => setMenuOpen(menuOpen === 'rightColumn' ? null : 'rightColumn')}
+              onCloseMenu={() => setMenuOpen(null)}
+            />
+          </>
+        ) : (
           <ColumnList
-            title="Right column"
-            column="rightColumn"
-            ids={cv.layout.rightColumn}
+            title="Page (top to bottom)"
+            column="leftColumn"
+            ids={singleColumnIds}
             sections={cv.sections}
             sensors={sensors}
-            onDragEnd={handleDragEnd('rightColumn')}
+            onDragEnd={handleSingleDragEnd}
             selectedSectionId={selectedSectionId}
             onSelectSection={onSelectSection}
-            menuOpen={menuOpen === 'rightColumn'}
-            onToggleMenu={() => setMenuOpen(menuOpen === 'rightColumn' ? null : 'rightColumn')}
-            onCloseMenu={() => setMenuOpen(null)}
-          />
-        )}
-        {!theme.twoColumn && cv.layout.rightColumn.length > 0 && (
-          <ColumnList
-            title="Continued"
-            column="rightColumn"
-            ids={cv.layout.rightColumn}
-            sections={cv.sections}
-            sensors={sensors}
-            onDragEnd={handleDragEnd('rightColumn')}
-            selectedSectionId={selectedSectionId}
-            onSelectSection={onSelectSection}
-            menuOpen={menuOpen === 'rightColumn'}
-            onToggleMenu={() => setMenuOpen(menuOpen === 'rightColumn' ? null : 'rightColumn')}
+            menuOpen={menuOpen === 'single'}
+            onToggleMenu={() => setMenuOpen(menuOpen === 'single' ? null : 'single')}
             onCloseMenu={() => setMenuOpen(null)}
           />
         )}
