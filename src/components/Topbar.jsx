@@ -113,7 +113,7 @@ export default function Topbar({ editing, onToggleEditing, onExportPDF, exportin
 
       <div className="topbar-actions">
         <button className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()} title="Import a previously saved .json document">
-          <ImportIcon /> Import
+          <ImportIcon /> Import JSON
         </button>
         <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFile} />
         <button

@@ -28,13 +28,13 @@ export function createDefaultTheme() {
     //   body bodySize           — running text (descriptions, bullets)
     //   role roleSize           — the role/subtitle line under an entry title
     //   meta metaSize           — dates, locations, contacts
-    nameSize: 22, // H1
+    nameSize: 24.5, // H1
     titleSize: 9.5,
-    sectionHeadingSize: 11, // H2
-    entryTitleSize: 9.5, // H3
-    bodySize: 8.4,
-    roleSize: 8.4,
-    metaSize: 7.6,
+    sectionHeadingSize: 12, // H2
+    entryTitleSize: 10, // H3
+    bodySize: 9,
+    roleSize: 8.5,
+    metaSize: 7.5,
 
     accentColor: '#141414',
     mutedColor: '#5a5a5a',
@@ -46,21 +46,21 @@ export function createDefaultTheme() {
     roleColor: '#8a5a12',
 
     // Spacing scale in pt. All vertical rhythm derives from `unit`.
-    unit: 6,
-    sectionGap: 1.6, // multiples of `unit` between sections
+    unit: 6.5,
+    sectionGap: 1.3, // multiples of `unit` between sections
     entryGap: 1.0, // multiples of `unit` between entries within a section
     lineHeight: 1.3,
 
     // Layout — page dimensions are fixed to A4 (see A4_HEIGHT_PT in paginate.js).
-    pageMarginX: 18, // pt
-    pageMarginY: 26, // pt — top margin
+    pageMarginX: 16, // pt
+    pageMarginY: 12, // pt — top margin
     pageMarginYBottom: 20, // pt — intentionally slightly less than the top margin
     columnGap: 10, // pt
     leftColumnWidth: 62, // percent
     twoColumn: true,
     headerAlign: 'center', // 'left' | 'center'
     sectionHeadingAlign: 'left',
-    sectionHeadingCase: 'upper', // 'upper' | 'title'
+    sectionHeadingCase: 'title', // 'upper' | 'title'
     sectionHeadingWeight: 700,
     showSectionRule: true,
     ruleThickness: 1,
@@ -73,7 +73,7 @@ export function createDefaultTheme() {
     // measuring their actual rendered height, so each page's content
     // naturally ends at that page's own bottom margin without any manual
     // "auto-fit" step.
-    maxPages: 1,
+    maxPages: 2,
 
     // Per-page manual page-break overrides, keyed by 1-based page number
     // (e.g. `{ 1: 512.4 }`). When a page has an entry here, pagination

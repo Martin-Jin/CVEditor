@@ -27,7 +27,7 @@ npm run dev
 ```
 
 Open the printed local URL (typically `http://localhost:5173`). It starts blank — fill it
-in, or use **Import** to load a `.json` file saved earlier with **Save JSON**.
+in, or use **Import JSON** to load a `.json` file saved earlier with **Save JSON**.
 
 ```bash
 npm run build

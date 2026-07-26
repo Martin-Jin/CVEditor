@@ -205,7 +205,7 @@ function ContinuousDocument({ cv, theme, cssVars, activeSectionId, onActivateSec
       />
       <div className={`cv-columns ${theme.twoColumn ? '' : 'single'}`} data-columns-root>
         <div className="cv-column cv-column-left" data-column="left">
-          {renderColumn(cv.layout.leftColumn)}
+          {renderColumn(theme.twoColumn ? cv.layout.leftColumn : [...cv.layout.leftColumn, ...cv.layout.rightColumn])}
         </div>
         {theme.twoColumn && (
           <div className="cv-column cv-column-right" data-column="right">
