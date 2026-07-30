@@ -109,7 +109,19 @@ ${styleTags}
   .cv-page {
     box-shadow: none !important;
     margin: 0 !important;
-    overflow: visible !important;
+    /* The authored 842pt height (see cv-document.css) is a hair taller
+       than a real A4 page (841.89pt). CSS paged-media fragments a box
+       based on its LAID-OUT height, not on what's actually painted — so
+       even with overflow hidden, that ~0.1pt excess got sliced into its
+       own near-blank trailing physical page after EVERY .cv-page, on top
+       of the intentional break-before below. overflow: hidden alone
+       can't fix this (it only clips paint, not page fragmentation).
+       Dropping the fixed height removes the mismatch entirely: JS
+       pagination (paginate.js) already guarantees each page's content
+       fits within one sheet, so the box only needs to be as tall as its
+       actual content here. */
+    height: auto !important;
+    overflow: hidden !important;
     /* Force out any leftover transform/filter (e.g. from the on-screen
        zoom control, or the editor's page-wrap scaling). A transformed or
        filtered element is composited on its own layer by most browser

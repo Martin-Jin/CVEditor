@@ -3,15 +3,21 @@ import { useLayoutEffect, useRef, useState } from 'react';
 const A4_HEIGHT_PT = 842;
 const PT_PER_PX = 72 / 96;
 const DEBOUNCE_MS = 60;
-// Small safety buffer subtracted from available height before packing, for
-// automatically-paginated pages only (never applied when a page has a
-// manual break override — see computePages). Measurement reads sub-pixel
-// rects from a live DOM, while the real page can render through slightly
-// different layout/paint passes (edit-mode chrome toggling on hover, font
-// hinting differences), so an item that measured as "fits with 0.1pt to
-// spare" can render a couple points taller in practice. Reserving a small
-// margin up front means "just barely fits" content reliably does fit.
-const SAFETY_MARGIN_PT = 2;
+// Fraction of a page's available height reserved as safety slack before
+// packing, for automatically-paginated pages only (never applied when a
+// page has a manual break override — see computePages). Measured directly:
+// exporting re-renders the same page content from scratch in a brand-new
+// popup window/document (see exportPDF.js) rather than reusing the
+// measured layout, and on a real CV that fresh render came out ~3.5%
+// taller than what was measured here for the identical content/width
+// (691.55pt measured vs 715.65pt actually rendered) — most likely
+// per-line sub-pixel rounding in a separate layout/paint pass, which
+// compounds with a fractional OS display-scale factor (e.g. Windows at
+// 125%) and accumulates across every wrapped line on the page. A flat
+// few-point buffer doesn't scale with how much text is on the page, which
+// is why bumping it from 2pt to 6pt made no visible difference — reserving
+// a percentage instead scales with content the same way the error does.
+const SAFETY_MARGIN_RATIO = 0.05;
 
 export function usePagination(measureRoot, cv, theme) {
   const [result, setResult] = useState({
@@ -171,8 +177,8 @@ function computePages(measureRoot, cv, theme) {
     // manual override does not — the person is directly specifying where
     // content should stop, so we honor that exactly rather than second-
     // guessing it with our own buffer.
-    const automaticAvailableHeightPt =
-      A4_HEIGHT_PT - marginTop - marginBottom - (isFirstPage ? headerHeightPt : 0) - SAFETY_MARGIN_PT;
+    const rawAvailableHeightPt = A4_HEIGHT_PT - marginTop - marginBottom - (isFirstPage ? headerHeightPt : 0);
+    const automaticAvailableHeightPt = rawAvailableHeightPt * (1 - SAFETY_MARGIN_RATIO);
     const availableHeightPt = manualBreakPt != null ? manualBreakPt : automaticAvailableHeightPt;
 
     let leftFrag = [];

@@ -14,6 +14,8 @@ dist-ssr
 
 # Personal CV content (see src/data/defaultCV.js) — never committed.
 src/data/myCV.local.js
+src/data/myCV.crown.local.js
+*.pdf
 
 # Editor directories and files
 .vscode/*
