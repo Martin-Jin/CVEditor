@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Topbar from './components/Topbar';
 import SectionsPanel from './components/SectionsPanel';
 import StylePanel from './components/StylePanel';
@@ -9,16 +9,33 @@ import { InfoIcon, CloseIcon } from './components/Icons';
 import './styles/app.css';
 import './styles/cv-document.css';
 
+const isMobileViewport = () => {
+  const mql = typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)') : null;
+  const matchesMedia = !!mql?.matches;
+  const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    typeof navigator !== 'undefined' ? navigator.userAgent : '',
+  );
+  return matchesMedia || mobileUA;
+};
+
 export default function App() {
   const cv = useCVStore((s) => s.cv);
   const theme = useCVStore((s) => s.theme);
   const [editing, setEditing] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [zoom, setZoom] = useState(0.9);
   const [selectedSectionId, setSelectedSectionId] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [hintDismissed, setHintDismissed] = useState(false);
   const stackRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(isMobileViewport());
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Tracks whether CVDocument's pagination currently has a recompute
   // in flight (debounced after an edit, or waiting on web fonts). Kept
   // in a ref rather than state since export only needs to read the
@@ -89,6 +106,21 @@ export default function App() {
     }
     setPageCount((prev) => (prev === pages.length ? prev : pages.length));
   }, []);
+
+  if (isMobile) {
+    return (
+      <div className="mobile-unsupported">
+        <div className="mobile-unsupported-card">
+          <h1>Mobile not supported</h1>
+          <p>
+            This app is designed for desktop editing and PDF export, and it does not currently support mobile
+            devices.
+          </p>
+          <p>Please open it on a laptop or desktop computer to continue.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">

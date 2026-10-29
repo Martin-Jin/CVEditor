@@ -112,6 +112,37 @@ input, textarea, select {
   overflow: hidden;
 }
 
+.mobile-unsupported {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--studio-bg);
+}
+
+.mobile-unsupported-card {
+  max-width: 420px;
+  width: 100%;
+  padding: 28px 24px;
+  background: var(--studio-panel);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-lg);
+  box-shadow: var(--studio-shadow-md);
+  text-align: center;
+}
+
+.mobile-unsupported-card h1 {
+  margin: 0 0 12px;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: -0.04em;
+}
+
+.mobile-unsupported-card p {
+  margin: 0 0 10px;
+  color: var(--studio-ink-soft);
+  line-height: 1.6;
+}
+
 .app-body {
   display: grid;
   grid-template-columns: 300px 1fr 320px;
