@@ -19,6 +19,9 @@ src/data/myCV.local.js
 src/data/myCV.crown.local.js
 *.pdf
 
+Application scripts/
+CLAUDE.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
