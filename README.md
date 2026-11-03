@@ -45,9 +45,9 @@ It starts from the default CV, not your browser autosave.
 ## Using your own CV as the default
 
 `src/data/defaultCV.js` is a blank placeholder. To have your own CV load by default instead
-(e.g. on your own machine or fork), copy it to `src/data/myCV.local.js` and fill in your
-details, keeping the same `createDefaultCV()` export. That file is gitignored, so it stays
-local — `defaultCV.js` picks it up automatically when present and falls back to the blank
+(e.g. on your own machine or fork), create `Application scripts/cv/myCV.js` with the same
+`createDefaultCV()` export and fill in your details. That folder is gitignored, so it stays
+local. `defaultCV.js` picks the file up automatically when present and falls back to the blank
 template otherwise.
 
 ## Project structure

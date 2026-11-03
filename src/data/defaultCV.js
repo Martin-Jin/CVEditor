@@ -1,7 +1,7 @@
 // Default CV content shown to a fresh visitor. This is deliberately a
 // generic placeholder template — the real resume text lives only in
-// `myCV.local.js`, a gitignored file that never leaves your machine (see the
-// override loading below).
+// `Application scripts/cv/myCV.js`, which lives in a separate private repo
+// that is gitignored here (see the override loading below).
 //
 // Shape overview:
 //   cv.header            -> { name, title, contacts: [], links: [] }
@@ -99,12 +99,14 @@ function blankCV() {
   };
 }
 
-// If a `myCV.local.js` file exists next to this one, it wins — this is how
-// you keep your own filled-out CV as the app's starting point without ever
-// committing it. `import.meta.glob` is resolved at build time by Vite, so
-// this is a no-op (empty object) in a clone that doesn't have the file.
-const localOverride = import.meta.glob('./myCV.local.js', { eager: true });
-const local = localOverride['./myCV.local.js'];
+// If `Application scripts/cv/myCV.js` exists (a private repo nested in this
+// folder, gitignored here), it wins. This is how the real CV stays the app's
+// starting point without being committed to this public repo. The file is
+// stored only there, with no copy in this repo. `import.meta.glob` is
+// resolved at build time by Vite, so it is a no-op (empty object) in a clone
+// that doesn't have the file.
+const localOverride = import.meta.glob('../../Application scripts/cv/myCV.js', { eager: true });
+const local = Object.values(localOverride)[0];
 
 export function createDefaultCV() {
   return local ? local.createDefaultCV() : blankCV();

@@ -6,7 +6,7 @@
 // the real "Export PDF" button and saves the print window it opens. This
 // reuses src/utils/exportPDF.js unchanged, so the file matches a manual
 // export. The browser starts with empty localStorage, so the CV is the
-// default one (src/data/myCV.local.js when present), not your autosave.
+// default one (Application scripts/cv/myCV.js when present), not your autosave.
 //
 // Headless Chromium ignores window.print(), so instead of the print dialog
 // we call page.pdf() on the popup. `preferCSSPageSize` makes it honour the
