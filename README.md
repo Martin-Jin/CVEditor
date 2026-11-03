@@ -34,6 +34,14 @@ npm run build
 npm run preview
 ```
 
+To export the PDF from the command line (headless Chromium, no print dialog):
+
+```bash
+npm run export-pdf -- my-cv.pdf
+```
+
+It starts from the default CV, not your browser autosave.
+
 ## Using your own CV as the default
 
 `src/data/defaultCV.js` is a blank placeholder. To have your own CV load by default instead
